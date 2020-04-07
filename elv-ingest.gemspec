@@ -9,4 +9,5 @@ Gem::Specification.new do |s|
     "lib/elv-ingest.rb"
   ]
   s.require_paths = ["lib"]
+  s.add_runtime_dependency 'uuid'
 end
