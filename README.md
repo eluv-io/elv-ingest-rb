@@ -92,12 +92,12 @@ irb> mezz_stats = s3ingestor .create_ABR_mezzanine({
 => {:stdout=>["Creating ABR Mezzanine...", "Starting Mezzanine Job(s)", "Library ID ilib3MCLKj9a7Vwfi1RQ2TjpqRGMQ6FS"], :command_line=>"node CreateABRMezzanine.js  --config-url https://main.net955210.contentfabric.io/config --library ilib3MCLKj9a7Vwfi1RQ2TjpqRGMQ6FS --masterHash hq__82MKx9MfwuqeB74pLvpy1ZkJ6JeoBbvMcL7qagfSFSNz5sYHJRn52V1HQz6s1Qg7hBUvZD3Khf --type iq__39g4WK8kDXVP8yuq6nQTuEcTBGbi --abr-profile /Users/marc-olivier/ELV/elv-client-js/testScripts/abr_profile_clear.json", :object_id=>"iq__YHegYyfZdEV3KLDrsjrbuC77wUb", :offering=>"default", :write_token=>"tqw_48sN3sw6F2naHdDQ1CRoQNqvYrHZeFSH1", :write_node=>"https://host-35-233-145-232.test.contentfabric.io/", :exit_code=>0}
 
 
-irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats.object_id)
+irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats["object_id"])
 
 => {:command_line=>"node MezzanineStatus.js  --config-url https://main.net955210.contentfabric.io/config --objectId iq__YHegYyfZdEV3KLDrsjrbuC77wUb", :jobs=>{"09688ccb-5f4c-469d-8391-7ccd7b17ad12"=>{"duration"=>124673185480, "duration_ms"=>0, "progress"=>{"percentage"=>75.86206896551724}, "run_state"=>"running", "start"=>"2020-04-06T20:08:11Z"}, "88225f85-ef04-487f-8897-76b8e1063c2e"=>{"duration"=>16123986647, "duration_ms"=>16123, "end"=>"2020-04-06T20:08:27Z", "progress"=>{"percentage"=>0}, "run_state"=>"finished", "start"=>"2020-04-06T20:08:11Z"}}, :complete_jobs=>1, :status=>"Running", :exit_code=>0}
 
 
-irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats.object_id)
+irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats["object_id"])
 
 => {:command_line=>"node MezzanineStatus.js  --config-url https://main.net955210.contentfabric.io/config --objectId iq__YHegYyfZdEV3KLDrsjrbuC77wUb --finalize", :jobs=>nil, :complete_jobs=>2, :status=>"ABR mezzanine object finalized", :exit_code=>0, :stdout=>[], :object_id=>"iq__YHegYyfZdEV3KLDrsjrbuC77wUb", :hash=>"hq__51Z4Pt1NRaFTchkJyaUtTNeBnBKvr6WyUFATZ46MFPfYXRRQiBRY6xEZnQRu5iTN5FJ9oL1Lbx"}
 
