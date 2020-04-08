@@ -304,29 +304,31 @@ module Elv
     #    If no block is provided, the reporting is done on the standard output.
     def self.create_production_master(arg, &reporting_callback)
       outputs = {:stdout=>[]}
-      files = arg[:files].map{|file| "--files \"#{file}\""}.join(" ")
-
-      cmd_line = "node CreateProductionMaster.js --config-url #{arg[:config_url]} --library #{arg[:library]} #{files} --title \"#{arg[:title]}\""
-      cmd_line << " --type #{arg[:type]}"  if (arg[:type])
-      cmd_line << " --encrypt #{arg[:encrypt]}" if (arg[:encrypt] != nil)
-      cmd_line << " --s3-copy #{arg[:s3_copy]}" if (arg[:s3_copy] != nil)
-      cmd_line << " --s3-reference #{arg[:s3_reference]}" if (arg[:s3_reference] != nil)
-      cmd_line << " --elv-geo #{arg[:elv_geo]}"  if (arg[:elv_geo])
+      cmd_arg = ["node", "CreateProductionMaster.js", "--config-url", arg[:config_url], "--library", arg[:library], "--title", arg[:title]]
+      arg[:files].each do |file|
+        cmd_arg += ["--files", file]
+      end
+      cmd_arg += ["--type", arg[:type]] if (arg[:type])
+      cmd_arg += ["--encrypt", arg[:encrypt].to_s] if (arg[:encrypt] != nil)
+      cmd_arg += ["--s3-copy", arg[:s3_copy].to_s] if (arg[:s3_copy] != nil)
+      cmd_arg += ["--s3-reference", arg[:s3_reference].to_s] if (arg[:s3_reference] != nil)
+      cmd_arg += ["--elv-geo",  arg[:elv_geo]]  if (arg[:elv_geo])
       metadata = arg[:metadata]
       if metadata
         if (metadata.is_a?(String) == false)
           metadata = metadata.to_json
         end
-        cmd_line << " --metadata '#{metadata.gsub(/'/){"'\\''"}}'"
+        cmd_arg += ["--metadata", metadata]
       end
-      outputs[:command_line]= cmd_line
       cmd_env = {"PRIVATE_KEY"=>arg[:private_key]}
       cmd_env["AWS_REGION"] = arg[:aws_region] if arg[:aws_region]
       cmd_env["AWS_BUCKET"] = arg[:aws_bucket] if arg[:aws_bucket]
       cmd_env["AWS_KEY"] = arg[:aws_key] if arg[:aws_key]
       cmd_env["AWS_SECRET"] = arg[:aws_secret] if arg[:aws_secret]
       cmd_path = File.join(arg[:elv_client_dir], "testScripts")
-      Open3.popen3(cmd_env, cmd_line,  {:chdir=> cmd_path}) {|stdin, stdout, stderr, wait_thr|
+      puts "cmd_arg: #{cmd_arg.inspect}"
+      outputs[:command_line]= cmd_line(cmd_arg)
+      Open3.popen3(cmd_env, *cmd_arg,  {:chdir=> cmd_path}) {|stdin, stdout, stderr, wait_thr|
           pid = wait_thr.pid # pid of the started process.
           if (!reporting_callback)
             reporting_callback = ->(msg,msg_type) { puts("#{msg_type}: #{msg}") }
@@ -426,32 +428,33 @@ module Elv
     #    If no block is provided, the reporting is done on the standard output.
     def self.create_ABR_mezzanine(arg, &reporting_callback)
       outputs = {:stdout=>[]}
-      cmd_line = "node CreateABRMezzanine.js  --config-url #{arg[:config_url]} --library #{arg[:library]} --masterHash #{arg[:master_hash]}"
-      cmd_line << " --type #{arg[:type]}"  if (arg[:type])
-      cmd_line << " --title \"#{arg[:title]}\"" if (arg[:title])
-      cmd_line << " --poster \"#{arg[:poster]}\"" if (arg[:poster])
-      cmd_line << " --variant #{arg[:variant]}" if (arg[:variant])
-      cmd_line << " --offering-key #{arg[:offering_key]}" if (arg[:offering_key])
-      cmd_line << " --existingMezzId #{arg[:existing_mezz_id]}" if (arg[:existing_mezz_id])
-      cmd_line << " --abr-profile #{arg[:abr_profile]}" if (arg[:abr_profile])
-      cmd_line << " --s3-copy #{arg[:s3_copy]}" if (arg[:s3_copy] != nil)
-      cmd_line << " --s3-reference #{arg[:s3_reference]}" if (arg[:s3_reference] != nil)
-      cmd_line << " --elv-geo #{arg[:elv_geo]}"  if (arg[:elv_geo])
+      cmd_arg = ["node", "CreateABRMezzanine.js", "--config-url", arg[:config_url], "--library", arg[:library], "--masterHash", arg[:master_hash]]
+
+      cmd_arg += ["--type", arg[:type]] if (arg[:type])
+      cmd_arg += ["--title", arg[:title]] if (arg[:title])
+      cmd_arg += ["--poster", arg[:poster]] if (arg[:poster])
+      cmd_arg += ["--variant", arg[:variant]] if (arg[:variant])
+      cmd_arg += ["--offering-key", arg[:offering_key]] if (arg[:offering_key])
+      cmd_arg += ["--existingMezzId", arg[:existing_mezz_id]] if (arg[:existing_mezz_id])
+      cmd_arg += ["--abr-profile",arg[:abr_profile]] if (arg[:abr_profile])
+      cmd_arg += ["--s3-copy", arg[:s3_copy].to_s] if (arg[:s3_copy] != nil)
+      cmd_arg += ["--s3-reference", arg[:s3_reference].to_s] if (arg[:s3_reference] != nil)
+      cmd_arg += ["--elv-geo",  arg[:elv_geo]]  if (arg[:elv_geo])
       metadata = arg[:metadata]
       if metadata
         if (metadata.is_a?(String) == false)
           metadata = metadata.to_json
         end
-        cmd_line << " --metadata '#{metadata.gsub(/'/){"'\\''"}}'"
+        cmd_arg += ["--metadata", metadata]
       end
-      outputs[:command_line]= cmd_line
+      outputs[:command_line]= cmd_line(cmd_arg)
       cmd_env = {"PRIVATE_KEY"=>arg[:private_key]}
       cmd_env["AWS_REGION"] = arg[:aws_region] if arg[:aws_region]
       cmd_env["AWS_BUCKET"] = arg[:aws_bucket] if arg[:aws_bucket]
       cmd_env["AWS_KEY"] = arg[:aws_key] if arg[:aws_key]
       cmd_env["AWS_SECRET"] = arg[:aws_secret] if arg[:aws_secret]
       cmd_path = File.join(arg[:elv_client_dir], "testScripts")
-      Open3.popen3(cmd_env, cmd_line,  {:chdir=> cmd_path}) {|stdin, stdout, stderr, wait_thr|
+      Open3.popen3(cmd_env, *cmd_arg,  {:chdir=> cmd_path}) {|stdin, stdout, stderr, wait_thr|
           pid = wait_thr.pid
           if (!reporting_callback)
             reporting_callback = ->(msg,msg_type) { puts("#{msg_type}: #{msg}") }
@@ -528,12 +531,12 @@ module Elv
     #    If no block is provided, the reporting is done on the standard output.
     def self.check_mezzanine_status(arg, &reporting_callback)
       outputs = {}
-      cmd_line = "node MezzanineStatus.js  --config-url #{arg[:config_url]} --objectId #{arg[:object_id]}"
-      cmd_line << " --variant #{arg[:variant]}" if (arg[:variant])
-      cmd_line << " --offering-key #{arg[:offering_key]}" if (arg[:offering_key])
-      cmd_line << " --finalize"  if (arg[:finalize])
-      outputs[:command_line]= cmd_line
-      Open3.popen3({"PRIVATE_KEY"=>arg[:private_key]}, cmd_line,
+      cmd_arg = ["node", "MezzanineStatus.js", "--config-url", arg[:config_url], "--objectId", arg[:object_id]]
+      cmd_arg += ["--variant", arg[:variant]] if (arg[:variant])
+      cmd_arg += ["--title", arg[:offering_key]] if (arg[:offering_key])
+      cmd_arg += ["--finalize"] if (arg[:finalize])
+      outputs[:command_line]= cmd_line(cmd_arg)
+      Open3.popen3({"PRIVATE_KEY"=>arg[:private_key]}, *cmd_arg,
                     {:chdir=> File.join(arg[:elv_client_dir], "testScripts")}
       ) {|stdin, stdout, stderr, wait_thr|
           pid = wait_thr.pid # pid of the started process.
@@ -623,6 +626,19 @@ module Elv
     #
     def self.finalize_ABR_mezzanine(arg, &reporting_callback)
       return check_mezzanine_status(arg.merge({:finalize => true}), reporting_callback)
+    end
+
+
+    def self.cmd_line(cmd_arg)
+      components = cmd_arg[0..1]
+      cmd_arg[2..-1].each do |arg|
+        if arg.match(/^--/)
+          components << arg
+        else
+          components << "'#{arg.gsub(/'/){"'\\''"}}'"
+        end
+      end
+      return components.join(" ")
     end
 
   end
