@@ -80,12 +80,12 @@ irb> File.open("/tmp/metadata", "w"){|f| f.puts({"another_field"=>["more","value
 => nil
 
 
-irb> mezz_stats = s3ingestor .ingest.create_ABR_mezzanine({
+irb> mezz_stats = s3ingestor .create_ABR_mezzanine({
     :library=>"ilib ID of the library in which to create the mezzanine object",
     :title=>"Test with S3 origin #1 -- MEZZ",
     :type=>"q__ Object ID of the content type ABR master",
     :abr_profile=> " Path to the ABR profiled file, for example elv-client-js/testScripts/abr_profile_clear.json",
-    :master_hash=> master_stats.hash,
+    :master_hash=> master_stats["hash"],
     :metadata=> "@/tmp/metadata"
   })
 
