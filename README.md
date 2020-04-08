@@ -58,19 +58,26 @@ irb> s3ingestor = Elv::Ingest.new({
 => #<Elv::Ingest:0x00007f862e0f7a60  @create_production_master_jobs={}, @pid_map={}, @masters_map={}>
 
 
-irb> master_stats = s3ingestor..create_production_master({
+irb> master_stats = s3ingestor.create_production_master({
     :title=>"Test with S3 origin #1",
     :library=>"ilib ID of the library in which to create the master object",
     :files=>[
       "Path to the video file in the bucket.mxf",
       "Path to the audio file in the bucket.mxf"
     ],
-    :type=>"iq__ Object ID of the content type ABR master",
+    :type=>"iq__ Object ID of the content type Production Master",
     :s3_reference=>true,
-    :asynchronous=>false
+    :asynchronous=>false,
+    :metadata=> {"public"=>{"note"=>"A 'test' object"}, "something"=>"else"}
   })
 
 => {:stdout=>["Creating Production Master", "iq__39g4WK8kDXVP8yuq6nQTuEcTBGbi", "{ done: true, uploadedFiles: 2, totalFiles: 2 }", "Production master object created:"], :command_line=>"node CreateProductionMaster.js --config-url https://main.net955210.contentfabric.io/config --library ilib3MCLKj9a7Vwfi1RQ2TjpqRGMQ6FS  --title \"Test with S3 origin #1\" --type iq__39g4WK8kDXVP8yuq6nQTuEcTBGbi --s3-reference true", :object_id=>"iq__2nEn9riTudJhdicqQRemxg85uB65", :hash=>"hq__82MKx9MfwuqeB74pLvpy1ZkJ6JeoBbvMcL7qagfSFSNz5sYHJRn52V1HQz6s1Qg7hBUvZD3Khf", :exit_code=>0}
+
+*Note*: when entering the s3 file path for the creation of the master, leave off S3 bucket name from beginning of file paths
+
+irb> File.open("/tmp/metadata", "w"){|f| f.puts({"another_field"=>["more","values"]}.to_json)}
+
+=> nil
 
 
 irb> mezz_stats = s3ingestor .ingest.create_ABR_mezzanine({
@@ -78,7 +85,8 @@ irb> mezz_stats = s3ingestor .ingest.create_ABR_mezzanine({
     :title=>"Test with S3 origin #1 -- MEZZ",
     :type=>"q__ Object ID of the content type ABR master",
     :abr_profile=> " Path to the ABR profiled file, for example elv-client-js/testScripts/abr_profile_clear.json",
-    :master_hash=> master_stats.hash
+    :master_hash=> master_stats.hash,
+    :metadata=> "@/tmp/metadata"
   })
 
 => {:stdout=>["Creating ABR Mezzanine...", "Starting Mezzanine Job(s)", "Library ID ilib3MCLKj9a7Vwfi1RQ2TjpqRGMQ6FS"], :command_line=>"node CreateABRMezzanine.js  --config-url https://main.net955210.contentfabric.io/config --library ilib3MCLKj9a7Vwfi1RQ2TjpqRGMQ6FS --masterHash hq__82MKx9MfwuqeB74pLvpy1ZkJ6JeoBbvMcL7qagfSFSNz5sYHJRn52V1HQz6s1Qg7hBUvZD3Khf --type iq__39g4WK8kDXVP8yuq6nQTuEcTBGbi --abr-profile /Users/marc-olivier/ELV/elv-client-js/testScripts/abr_profile_clear.json", :object_id=>"iq__YHegYyfZdEV3KLDrsjrbuC77wUb", :offering=>"default", :write_token=>"tqw_48sN3sw6F2naHdDQ1CRoQNqvYrHZeFSH1", :write_node=>"https://host-35-233-145-232.test.contentfabric.io/", :exit_code=>0}
@@ -92,3 +100,5 @@ irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats.object_id)
 irb> s3ingestor.check_ABR_mezzanine_status(mezz_stats.object_id)
 
 => {:command_line=>"node MezzanineStatus.js  --config-url https://main.net955210.contentfabric.io/config --objectId iq__YHegYyfZdEV3KLDrsjrbuC77wUb --finalize", :jobs=>nil, :complete_jobs=>2, :status=>"ABR mezzanine object finalized", :exit_code=>0, :stdout=>[], :object_id=>"iq__YHegYyfZdEV3KLDrsjrbuC77wUb", :hash=>"hq__51Z4Pt1NRaFTchkJyaUtTNeBnBKvr6WyUFATZ46MFPfYXRRQiBRY6xEZnQRu5iTN5FJ9oL1Lbx"}
+
+
