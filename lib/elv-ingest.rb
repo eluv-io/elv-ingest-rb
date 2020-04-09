@@ -61,11 +61,15 @@ module Elv
     # :library       ID of the library in which to create the master  [String]
     # :files         Array of files path or file descriptor           [Array]
     #
-    # => optional: :asynchronous, :type, :metadata, :encrypt, :s3_copy, :s3_reference, :elv_geo
+    # => optional: :asynchronous, :type, :name, :ip_title_id, :display_title
+    #              :metadata, :encrypt, :s3_copy, :s3_reference, :elv_geo
     # :asynchronous  If sets to true, the execution will be in the backgound,
     #                the call will return a tracking pid              [Boolean]
     # :type          Name, object ID, or version hash of the content type for
     #                the master                                       [String]
+    # :name          The Name to give the production master object    [String]
+    # :ip_title_id   The ip-title-id of the asset                     [String]
+    # :display_title The display title of the asset                   [String]
     # :metadata      Metadata to include in the object metadata, as
     #                - ruby map {"metadata-fieldname"=>metadata-fieldvalue}
     #                - a JSON string of the metadata
@@ -191,15 +195,24 @@ module Elv
     #  with :finalize=>true or by calling Elv::Ingest.finalize_ABR_mezzanine.
     #
     # arguments                                                       [Hash]
-    # => required:   :library, :master_hash
+    # => required:   :library, :master_hash, :title
     # :library       ID of the library in which to create the master  [string]
     # :master_hash   Version hash of the master object                [string]
-    #
-    # => optional: :type, :title, :poster, :metadata, :variant, :offering_key,
-    #              :existing_mezz_id :s3_copy, :s3_reference, :elv_geo
     # :title         Title for the master                             [string]
+    #
+    # => optional: :type, :name, :display_title, :ip_title_id, :slug,
+    #              :poster, :metadata, :variant, :offering_key,
+    #              :existing_mezz_id :s3_copy, :s3_reference, :elv_geo
     # :type          Name, object ID, or version hash of the content type for
-    #                the mezzanine                                    [string]
+    #                the mezzanine
+    # :name          The Object name for the mezzanine object         [string]
+    # :display_title Display title of mezzanine (defaulted to title)  [String]
+    # :slug          Slug for the mezzanine (generated based on display title
+    #                if not specified)                                [String]
+    # :ip_title_id   IP title ID for the mezzanine (equivalent to slug
+    #                if not specified)                                [String]
+    # :title_type    Title type for the mezzanine                     [String]
+    # :asset_type    Asset type for the mezzanine                     [String]
     # :poster        File pathh to poster image for this mezzanine    [string]
     # :variant       Variant of the mezzanine                [default: "default"]
     # :metadata      Metadata to include in the object metadata, as
@@ -270,28 +283,32 @@ module Elv
     #
     # arg:
     # => required:  :private_key, :config_url, :elv_client_dir, :library, :title, :files
-    # :private_key   The private key to use to create the master      [string]
+    # :private_key   The private key to use to create the master      [String]
     # :config_url    URL pointing to the Fabric configuration. i.e.
-    #                https://main.net955210.contentfabric.io/config   [string]
+    #                https://main.net955210.contentfabric.io/config   [String]
     # :elv_client_dir The path to the location where elv-client-js is
-    #                deployed                                         [string]
-    # :title         Title for the master                             [string]
-    # :library       ID of the library in which to create the master  [string]
-    # :files         Array of files path or file descriptor           [array]
+    #                deployed                                         [String]
+    # :title         Title of the asset                               [String]
+    # :library       ID of the library in which to create the master  [String]
+    # :files         Array of files path or file descriptor           [Array]
     #
-    # => optional: :type, :metadata, :encrypt, :s3_copy, :s3_reference, :elv_geo
+    # => optional: :type, :metadata, :encrypt, :s3_copy, :s3_reference, :elv_geo,
+    #              :name, :ip_title_id, :display_title
     # :type          Name, object ID, or version hash of the content type for
-    #                the master                                       [string]
+    #                the master                                       [String]
+    # :name          The Name to give the production master object    [String]
+    # :ip_title_id   The ip-title-id of the asset                     [String]
+    # :display_title The display title of the asset                   [String]
     # :metadata      Metadata to include in the object metadata, as
     #                - ruby map {"metadata-fieldname"=>metadata-fieldvalue}
     #                - a JSON string of the metadata
     #                - or file path prefixed with '@'
     # :s3_copy       If specified, files will be pulled from an S3 bucket instead
-    #                of the local system                              [boolean]
+    #                of the local system                              [Boolean]
     # :s3_reference  If specified, files will be referenced from an S3 bucket
-    #                instead of the local system                      [boolean]
+    #                instead of the local system                      [Boolean]
     # :elv_geo       Geographic region for the fabric nodes. Available regions:
-    #                na-west-north|na-west-south|na-east|eu-west      [string]
+    #                na-west-north|na-west-south|na-east|eu-west      [String]
     # :aws_region                                                     [String]
     # :aws_bucket                                                     [String]
     # :aws_key                                                        [String]
@@ -308,6 +325,9 @@ module Elv
       arg[:files].each do |file|
         cmd_arg += ["--files", file]
       end
+      cmd_arg += ["--name", arg[:name]] if (arg[:name])
+      cmd_arg += ["--ip-title-id", arg[:ip_title_id]] if (arg[:ip_title_id])
+      cmd_arg += ["--display-title", arg[:display_title]] if (arg[:display_title])
       cmd_arg += ["--type", arg[:type]] if (arg[:type])
       cmd_arg += ["--encrypt", arg[:encrypt].to_s] if (arg[:encrypt] != nil)
       cmd_arg += ["--s3-copy", arg[:s3_copy].to_s] if (arg[:s3_copy] != nil)
@@ -385,36 +405,45 @@ module Elv
     #  with :finalize=>true or by calling Elv::Ingest.finalize_ABR_mezzanine.
     #
     # arg:
-    # => required:  :private_key, :config_url, :elv_client_dir, :library, :master_hash
-    # :private_key   The private key to use to create the master      [string]
+    # => required:  :private_key, :config_url, :elv_client_dir, :library,
+    #               :master_hash, :type, :title
+    # :private_key   The private key to use to create the master      [String]
     # :config_url    URL pointing to the Fabric configuration. i.e.
-    #                https://main.net955210.contentfabric.io/config   [string]
+    #                https://main.net955210.contentfabric.io/config   [String]
     # :elv_client_dir The path to the location where elv-client-js is
-    #                deployed                                         [string]
-    # :library       ID of the library in which to create the master  [string]
-    # :master_hash   Version hash of the master object                [string]
-    #
-    # => optional: :type, :title, :poster, :metadata, :variant, :offering_key,
-    #              :existing_mezz_id :s3_copy, :s3_reference, :elv_geo
-    # :title         Title for the master                             [string]
+    #                deployed                                         [String]
+    # :library       ID of the library in which to create the master  [String]
+    # :master_hash   Version hash of the master object                [String]
     # :type          Name, object ID, or version hash of the content type for
-    #                the mezzanine                                    [string]
-    # :poster        File pathh to poster image for this mezzanine    [string]
+    #                the mezzanine                                    [String]
+    # :title         Title for the mezzanine object created           [String]
+    #
+    # => optional: :type, :poster, :metadata, :variant, :offering_key,
+    #              :display_title, :slug, :ip_title_id, :title_type, :asset_type
+    #              :existing_mezz_id :s3_copy, :s3_reference, :elv_geo
+    # :poster        File pathh to poster image for this mezzanine    [String]
     # :variant       Variant of the mezzanine                [default: "default"]
     # :metadata      Metadata to include in the object metadata, as
     #                - ruby map {"metadata-fieldname"=>metadata-fieldvalue}
     #                - a JSON string of the metadata
     #                - or file path prefixed with '@'
+    # :display_title Display title of mezzanine (defaulted to title)  [String]
+    # :slug          Slug for the mezzanine (generated based on display title
+    #                if not specified)                                [String]
+    # :ip_title_id   IP title ID for the mezzanine (equivalent to slug
+    #                if not specified)                                [String]
+    # :title_type    Title type for the mezzanine                     [String]
+    # :asset_type    Asset type for the mezzanine                     [String]
     # :offering_key  Offering key for the new mezzanine      [default: "default"]
     # :existing_mezz_id  If re-running the mezzanine process, the ID of an existing
-    #              mezzanine object                                   [string]
-    # :abr_profile     Path to JSON file containing alternative ABR profile
+    #              mezzanine object                                   [String]
+    # :abr_profile   Path to JSON file containing alternative ABR profile
     # :s3_copy       If specified, files will be pulled from an S3 bucket instead
-    #                of the local system                              [boolean]
+    #                of the local system                              [Boolean]
     # :s3_reference  If specified, files will be referenced from an S3 bucket
-    #                instead of the local system                      [boolean]
+    #                instead of the local system                      [Boolean]
     # :elv_geo       Geographic region for the fabric nodes. Available regions:
-    #                na-west-north|na-west-south|na-east|eu-west      [string]
+    #                na-west-north|na-west-south|na-east|eu-west      [String]
     # :aws_region                                                     [String]
     # :aws_bucket                                                     [String]
     # :aws_key                                                        [String]
@@ -434,6 +463,12 @@ module Elv
       cmd_arg += ["--title", arg[:title]] if (arg[:title])
       cmd_arg += ["--poster", arg[:poster]] if (arg[:poster])
       cmd_arg += ["--variant", arg[:variant]] if (arg[:variant])
+      cmd_arg += ["--name", arg[:name]] if (arg[:name])
+      cmd_arg += ["--ip-title-id", arg[:ip_title_id]] if (arg[:ip_title_id])
+      cmd_arg += ["--display-title", arg[:display_title]] if (arg[:display_title])
+      cmd_arg += ["--slug", arg[:slug]] if (arg[:slug])
+      cmd_arg += ["--title-type", arg[:title_type]] if (arg[:title_type])
+      cmd_arg += ["--asset-type", arg[:asset_type]] if (arg[:asset_type])
       cmd_arg += ["--offering-key", arg[:offering_key]] if (arg[:offering_key])
       cmd_arg += ["--existingMezzId", arg[:existing_mezz_id]] if (arg[:existing_mezz_id])
       cmd_arg += ["--abr-profile",arg[:abr_profile]] if (arg[:abr_profile])
@@ -631,7 +666,9 @@ module Elv
 
     def self.cmd_line(cmd_arg)
       components = cmd_arg[0..1]
-      cmd_arg[2..-1].each do |arg|
+      cmd_arg[2..-1].each do |raw_arg|
+        arg =raw_arg.to_s
+        next if (arg == "")
         if arg.match(/^--/)
           components << arg
         else
