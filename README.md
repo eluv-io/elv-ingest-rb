@@ -16,8 +16,8 @@ Installation
 		$ cd ~/ELV
 	- pull the git branch for elv-client-js
 		$ git clone git@github.com:eluv-io/elv-client-js.git
-	- Switch to the 'develop' branch
-		$ git checkout develop
+	- Switch to the 'master' branch
+		$ git checkout master
 	- Install the node dependencies
 		$ npm install
 	- test that the install works
