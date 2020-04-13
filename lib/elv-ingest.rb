@@ -244,7 +244,7 @@ module Elv
     end
 
 
-    # Elv::Ingest.check_mezzanine_status(arg) {|msg, msg_type|}
+    # check_ABR_mezzanine_status(identifier, finalize=true) 
     # --> {:object_id, :hash, :jobs , :complete_jobs, :status, :stdout, :stderr,
     #      :command_line, :exit_code}
     #
